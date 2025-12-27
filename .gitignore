@@ -1,0 +1,14 @@
+# Node modules
+node_modules
+
+# Build output
+dist
+
+# Test output
+coverage
+
+# Environment variables
+.env
+
+# IDE files
+.idea
