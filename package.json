@@ -12,17 +12,19 @@
 		"README.md"
 	],
 	"scripts": {
-		"build": "pnpm clean && tsup --tsconfig tsconfig.build.json",
-		"build:watch": "pnpm clean && tsup --watch",
+		"build": "npm run clean && tsup --tsconfig tsconfig.build.json",
+		"build:watch": "npm run clean && tsup --watch",
 		"clean": "del-cli dist *.tsbuildinfo",
 		"lint": "eslint \"./**/*.ts*\"",
-		"type-check": "tsc --build",
+		"type-check": "tsc --noEmit",
 		"prettier-check": "prettier --check \"./**/*.ts*\"",
-		"test": "pnpm test:node && pnpm test:edge",
-		"test:update": "pnpm test:node -u",
+		"test": "vitest run",
 		"test:watch": "vitest --config vitest.node.config.js",
+		"test:node": "vitest --config vitest.node.config.js --run",
 		"test:edge": "vitest --config vitest.edge.config.js --run",
-		"test:node": "vitest --config vitest.node.config.js --run"
+		"test:coverage": "vitest run --coverage",
+		"perf": "npx tsx perf/performance-test.ts",
+		"perf:full": "OLLM_REQUESTS_PER_MODEL=500 OLLM_CONCURRENT_REQUESTS=20 npx tsx perf/performance-test.ts"
 	},
 	"exports": {
 		"./package.json": "./package.json",
@@ -33,17 +35,20 @@
 		}
 	},
 	"dependencies": {
-		"@ai-sdk/openai-compatible": "workspace:*",
-		"@ai-sdk/provider": "workspace:*",
-		"@ai-sdk/provider-utils": "workspace:*"
+		"@ai-sdk/openai-compatible": "^2.0.13",
+		"@ai-sdk/provider": "^3.0.4",
+		"@ai-sdk/provider-utils": "^3.0.10"
 	},
 	"devDependencies": {
-		"@types/node": "20.17.24",
-		"@vercel/ai-tsconfig": "workspace:*",
-		"ai": "workspace:*",
-		"tsup": "^8",
-		"typescript": "5.8.3",
-		"zod": "3.25.76"
+		"@types/node": "^20.17.24",
+		"@vitest/coverage-v8": "^2.1.0",
+		"ai": "^6.0.39",
+		"del-cli": "^6.0.0",
+		"tsup": "^8.0.0",
+		"tsx": "^4.21.0",
+		"typescript": "^5.8.3",
+		"vitest": "^2.1.0",
+		"zod": "^3.25.76"
 	},
 	"peerDependencies": {
 		"zod": "^3.25.76 || ^4.1.8"
@@ -54,18 +59,22 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"homepage": "https://github.com/your-repo/ollm",
+	"homepage": "https://github.com/ofoundation/o.xyz",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/your-repo/ollm.git"
+		"url": "git+https://github.com/ofoundation/o.xyz.git",
+		"directory": "ollm-ai-sdk"
 	},
 	"bugs": {
-		"url": "https://github.com/your-repo/ollm/issues"
+		"url": "https://github.com/ofoundation/o.xyz/issues"
 	},
 	"keywords": [
 		"ai",
 		"ollm",
 		"llm",
-		"openai-compatible"
+		"openai-compatible",
+		"tee",
+		"confidential-computing",
+		"vercel-ai-sdk"
 	]
 }

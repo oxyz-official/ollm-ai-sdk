@@ -1,6 +1,7 @@
 import {
   OpenAICompatibleChatLanguageModel,
   OpenAICompatibleCompletionLanguageModel,
+  OpenAICompatibleEmbeddingModel,
   ProviderErrorStructure,
 } from '@ai-sdk/openai-compatible';
 import {
@@ -147,9 +148,11 @@ export function createOLLM(options: OLLMProviderSettings = {}): OLLMProvider {
       errorStructure: ollmErrorStructure,
     });
 
-  // OLLM does not support embedding models
   const createEmbeddingModel = (modelId: OLLMEmbeddingModelId) => {
-    throw new NoSuchModelError({ modelId, modelType: 'embeddingModel' });
+    return new OpenAICompatibleEmbeddingModel(modelId, {
+      ...getCommonModelConfig('embedding'),
+      errorStructure: ollmErrorStructure,
+    });
   };
 
   const provider = (modelId: OLLMChatModelId) => createChatModel(modelId);
