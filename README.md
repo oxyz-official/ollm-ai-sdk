@@ -32,7 +32,7 @@ console.log(text);
 import { createOLLM } from '@ai-sdk/ollm';
 
 const ollm = createOLLM({
-  baseURL: 'http://localhost:4000/v1', // Your OLLM server URL
+  baseURL: 'https://api.ollm.com/v1', // Your OLLM server URL
   apiKey: 'your-api-key', // Or set OLLM_API_KEY environment variable
 });
 
@@ -98,7 +98,7 @@ const { text, toolCalls } = await generateText({
 | Option    | Type                     | Description                                           | Default                   |
 | --------- | ------------------------ | ----------------------------------------------------- | ------------------------- |
 | `apiKey`  | `string`                 | OLLM API key (or set `OLLM_API_KEY` env variable)     | -                         |
-| `baseURL` | `string`                 | Base URL for OLLM API                                 | `http://localhost:4000/v1` |
+| `baseURL` | `string`                 | Base URL for OLLM API                                 | `https://api.ollm.com/v1` |
 | `headers` | `Record<string, string>` | Custom headers to include in requests                 | -                         |
 | `fetch`   | `FetchFunction`          | Custom fetch implementation                           | -                         |
 

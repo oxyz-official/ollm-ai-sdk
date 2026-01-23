@@ -9,7 +9,7 @@
  * - First token latency (TTFT) for streaming
  * 
  * Prerequisites:
- * - o.llm proxy running (default: http://localhost:4000)
+ * - o.llm proxy running (default: https://api.ollm.com)
  * - OLLM_API_KEY environment variable set
  * - TEE providers (Phala/NEAR) configured in proxy
  * 
@@ -17,7 +17,7 @@
  *   OLLM_API_KEY=your-key npx ts-node perf/performance-test.ts
  *   
  * Options (via environment variables):
- *   OLLM_BASE_URL - Proxy URL (default: http://localhost:4000/v1)
+ *   OLLM_BASE_URL - Proxy URL (default: https://api.ollm.com/v1)
  *   OLLM_REQUESTS_PER_MODEL - Requests per model (default: 50)
  *   OLLM_CONCURRENT_REQUESTS - Concurrency level (default: 5)
  */
@@ -27,7 +27,7 @@ import { generateText, streamText } from 'ai';
 
 // Configuration
 const CONFIG = {
-  baseURL: process.env.OLLM_BASE_URL || 'http://localhost:4000/v1',
+  baseURL: process.env.OLLM_BASE_URL || 'https://api.ollm.com/v1',
   apiKey: process.env.OLLM_API_KEY || '',
   requestsPerModel: parseInt(process.env.OLLM_REQUESTS_PER_MODEL || '50'),
   concurrentRequests: parseInt(process.env.OLLM_CONCURRENT_REQUESTS || '5'),
@@ -69,10 +69,10 @@ function calculatePercentiles(latencies: number[]): PercentileStats {
   if (latencies.length === 0) {
     return { p50: 0, p95: 0, p99: 0, min: 0, max: 0, avg: 0 };
   }
-  
+
   const sorted = [...latencies].sort((a, b) => a - b);
   const len = sorted.length;
-  
+
   return {
     p50: sorted[Math.floor(len * 0.5)],
     p95: sorted[Math.floor(len * 0.95)],
@@ -99,40 +99,40 @@ async function measureLatency(
     ttftLatencies: [],
     errors: [],
   };
-  
+
   console.log(`\n  Testing ${modelName} (${modelId})...`);
-  
+
   // Run requests in batches based on concurrency
   for (let i = 0; i < numRequests; i += concurrency) {
     const batchSize = Math.min(concurrency, numRequests - i);
     const promises = [];
-    
+
     for (let j = 0; j < batchSize; j++) {
       promises.push(
         (async () => {
           const start = performance.now();
           let ttft: number | null = null;
-          
+
           try {
             // Use streaming to measure TTFT
             const { textStream } = streamText({
               model: ollm(modelId),
               prompt: TEST_PROMPT,
             });
-            
+
             // Measure time to first token
             for await (const _chunk of textStream) {
               if (ttft === null) {
                 ttft = performance.now() - start;
               }
             }
-            
+
             const totalLatency = performance.now() - start;
             result.latencies.push(totalLatency);
             if (ttft !== null) {
               result.ttftLatencies.push(ttft);
             }
-            
+
             process.stdout.write('.');
           } catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
@@ -142,10 +142,10 @@ async function measureLatency(
         })()
       );
     }
-    
+
     await Promise.all(promises);
   }
-  
+
   console.log(` Done (${result.latencies.length}/${numRequests} successful)`);
   return result;
 }
@@ -157,15 +157,15 @@ async function runThroughputTest(
   concurrency: number = 10,
 ): Promise<{ requestsPerSecond: number; successRate: number }> {
   console.log(`\n  Throughput test: ${modelId} for ${duration / 1000}s with ${concurrency} concurrent...`);
-  
+
   let completed = 0;
   let errors = 0;
   const startTime = performance.now();
   let running = true;
-  
+
   // Timeout to stop the test
   setTimeout(() => { running = false; }, duration);
-  
+
   const workers = Array(concurrency).fill(null).map(async () => {
     while (running) {
       try {
@@ -181,13 +181,13 @@ async function runThroughputTest(
       }
     }
   });
-  
+
   await Promise.all(workers);
   const elapsed = (performance.now() - startTime) / 1000;
-  
+
   const requestsPerSecond = completed / elapsed;
   const successRate = (completed / (completed + errors)) * 100;
-  
+
   console.log(`\n  Completed: ${completed} requests in ${elapsed.toFixed(1)}s`);
   return { requestsPerSecond, successRate };
 }
@@ -197,7 +197,7 @@ async function checkProxyHealth(baseURL: string, apiKey: string): Promise<boolea
     // Try /health endpoint (remove /v1 suffix if present)
     const healthURL = baseURL.replace(/\/v1\/?$/, '/health');
     console.log(`  Checking: ${healthURL}`);
-    const response = await fetch(healthURL, { 
+    const response = await fetch(healthURL, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -220,14 +220,14 @@ async function main() {
   console.log(`Concurrency: ${CONFIG.concurrentRequests}`);
   console.log(`Timestamp: ${new Date().toISOString()}`);
   console.log('═'.repeat(70));
-  
+
   // Check prerequisites
   if (!CONFIG.apiKey) {
     console.error('\n❌ ERROR: OLLM_API_KEY environment variable is required');
     console.error('   Usage: OLLM_API_KEY=your-key npx ts-node perf/performance-test.ts');
     process.exit(1);
   }
-  
+
   // Check proxy health
   console.log('\nChecking proxy health...');
   const isHealthy = await checkProxyHealth(CONFIG.baseURL, CONFIG.apiKey);
@@ -238,20 +238,20 @@ async function main() {
     process.exit(1);
   }
   console.log('✓ Proxy is healthy\n');
-  
+
   // Create provider
   const ollm = createOLLM({
     baseURL: CONFIG.baseURL,
     apiKey: CONFIG.apiKey,
   });
-  
+
   const results: LatencyResult[] = [];
-  
+
   // Test TEE models
   console.log('\n' + '─'.repeat(70));
   console.log('LATENCY TESTS - TEE Models (Confidential Computing)');
   console.log('─'.repeat(70));
-  
+
   for (const model of TEST_MODELS.tee) {
     try {
       const result = await measureLatency(
@@ -267,12 +267,12 @@ async function main() {
       console.log(`  ⚠ Skipping ${model.name}: Model not available`);
     }
   }
-  
+
   // Test standard models
   console.log('\n' + '─'.repeat(70));
   console.log('LATENCY TESTS - Standard Models (Non-TEE)');
   console.log('─'.repeat(70));
-  
+
   for (const model of TEST_MODELS.standard) {
     try {
       const result = await measureLatency(
@@ -288,31 +288,31 @@ async function main() {
       console.log(`  ⚠ Skipping ${model.name}: Model not available`);
     }
   }
-  
+
   // Print results
   console.log('\n' + '═'.repeat(70));
   console.log('RESULTS SUMMARY');
   console.log('═'.repeat(70));
-  
+
   console.log('\n📊 LATENCY DISTRIBUTION (milliseconds)');
   console.log('─'.repeat(70));
   console.log(
-    'Model'.padEnd(30) + 
-    'Type'.padEnd(8) + 
-    'p50'.padStart(8) + 
-    'p95'.padStart(8) + 
-    'p99'.padStart(8) + 
+    'Model'.padEnd(30) +
+    'Type'.padEnd(8) +
+    'p50'.padStart(8) +
+    'p95'.padStart(8) +
+    'p99'.padStart(8) +
     'Avg'.padStart(8) +
     'Success'.padStart(10)
   );
   console.log('─'.repeat(70));
-  
+
   for (const result of results) {
     if (result.latencies.length === 0) continue;
-    
+
     const stats = calculatePercentiles(result.latencies);
     const successRate = (result.latencies.length / (result.latencies.length + result.errors.length)) * 100;
-    
+
     console.log(
       result.modelName.substring(0, 29).padEnd(30) +
       (result.isTEE ? 'TEE' : 'STD').padEnd(8) +
@@ -323,24 +323,24 @@ async function main() {
       `${successRate.toFixed(1)}%`.padStart(10)
     );
   }
-  
+
   console.log('\n📊 TIME TO FIRST TOKEN (TTFT) - milliseconds');
   console.log('─'.repeat(70));
   console.log(
-    'Model'.padEnd(30) + 
-    'Type'.padEnd(8) + 
-    'p50'.padStart(8) + 
-    'p95'.padStart(8) + 
-    'p99'.padStart(8) + 
+    'Model'.padEnd(30) +
+    'Type'.padEnd(8) +
+    'p50'.padStart(8) +
+    'p95'.padStart(8) +
+    'p99'.padStart(8) +
     'Avg'.padStart(8)
   );
   console.log('─'.repeat(70));
-  
+
   for (const result of results) {
     if (result.ttftLatencies.length === 0) continue;
-    
+
     const stats = calculatePercentiles(result.ttftLatencies);
-    
+
     console.log(
       result.modelName.substring(0, 29).padEnd(30) +
       (result.isTEE ? 'TEE' : 'STD').padEnd(8) +
@@ -350,28 +350,28 @@ async function main() {
       stats.avg.toFixed(0).padStart(8)
     );
   }
-  
+
   // TEE vs Standard comparison
   const teeResults = results.filter(r => r.isTEE && r.latencies.length > 0);
   const stdResults = results.filter(r => !r.isTEE && r.latencies.length > 0);
-  
+
   if (teeResults.length > 0 && stdResults.length > 0) {
     console.log('\n📊 TEE OVERHEAD ANALYSIS');
     console.log('─'.repeat(70));
-    
-    const avgTeeLatency = teeResults.reduce((sum, r) => 
+
+    const avgTeeLatency = teeResults.reduce((sum, r) =>
       sum + calculatePercentiles(r.latencies).avg, 0) / teeResults.length;
-    const avgStdLatency = stdResults.reduce((sum, r) => 
+    const avgStdLatency = stdResults.reduce((sum, r) =>
       sum + calculatePercentiles(r.latencies).avg, 0) / stdResults.length;
-    
+
     const overhead = avgTeeLatency - avgStdLatency;
     const overheadPercent = ((avgTeeLatency / avgStdLatency) - 1) * 100;
-    
+
     console.log(`Average TEE latency:      ${avgTeeLatency.toFixed(0)}ms`);
     console.log(`Average Standard latency: ${avgStdLatency.toFixed(0)}ms`);
     console.log(`TEE overhead:             ${overhead.toFixed(0)}ms (${overheadPercent.toFixed(1)}%)`);
   }
-  
+
   // Errors summary
   const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
   if (totalErrors > 0) {
@@ -385,11 +385,11 @@ async function main() {
       }
     }
   }
-  
+
   console.log('\n' + '═'.repeat(70));
   console.log(`Test completed at ${new Date().toISOString()}`);
   console.log('═'.repeat(70));
-  
+
   // Return exit code based on success
   const successfulTests = results.filter(r => r.latencies.length > 0).length;
   process.exit(successfulTests > 0 ? 0 : 1);

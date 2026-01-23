@@ -48,7 +48,7 @@ export interface OLLMProviderSettings {
 
   /**
    * Base URL for the OLLM API calls.
-   * @default 'http://localhost:4000/v1'
+   * @default 'https://api.ollm.com/v1'
    */
   baseURL?: string;
 
@@ -103,7 +103,7 @@ export interface OLLMProvider extends ProviderV3 {
   imageModel(modelId: string): ImageModelV3;
 }
 
-const defaultBaseURL = 'http://localhost:4000/v1';
+const defaultBaseURL = 'https://api.ollm.com/v1';
 
 export function createOLLM(options: OLLMProviderSettings = {}): OLLMProvider {
   const baseURL = withoutTrailingSlash(options.baseURL ?? defaultBaseURL);

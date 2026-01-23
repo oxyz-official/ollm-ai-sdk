@@ -24,7 +24,7 @@ Configure via environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OLLM_BASE_URL` | `http://localhost:4000/v1` | o.llm proxy URL |
+| `OLLM_BASE_URL` | `https://api.ollm.com/v1` | o.llm proxy URL |
 | `OLLM_API_KEY` | (required) | API key for authentication |
 | `OLLM_REQUESTS_PER_MODEL` | `50` | Number of requests per model |
 | `OLLM_CONCURRENT_REQUESTS` | `5` | Concurrency level |
@@ -59,7 +59,7 @@ Configure via environment variables:
 ═══════════════════════════════════════════════════════════════════════
 OLLM Performance Test Suite
 ═══════════════════════════════════════════════════════════════════════
-Base URL: http://localhost:4000/v1
+Base URL: https://api.ollm.com/v1
 Requests per model: 50
 Concurrency: 5
 
