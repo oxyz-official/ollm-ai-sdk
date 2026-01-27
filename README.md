@@ -1,128 +1,148 @@
-# @ai-sdk/ollm
+# OLLM Provider for the AI SDK
 
-OLLM provider for the [AI SDK](https://ai-sdk.dev/docs).
+[OLLM](https://ollm.com/) is the world's first enterprise router aggregating high-security, zero-knowledge LLM providers. It provides a unified API gateway to access AI models with guaranteed military-grade encryption at every layer. The OLLM provider for the AI SDK enables seamless integration with all these models while offering unique advantages:
 
-OLLM is a proxy server that enables you to call 100+ LLMs using the OpenAI format. This provider wraps the OLLM API for seamless integration with the AI SDK.
+- **Verifiable Privacy**: All models run with confidential computing for maximum security
+- **Universal Model Access**: One API key for models from multiple providers
+- **Confidential Computing**: Hardware-level encryption with TEE (Trusted Execution Environment) on all models
+- **Military-Grade Security**: End-to-end encryption at every layer of the stack
+- **Simple Integration**: OpenAI-compatible API across all models
 
-## Installation
+Learn more about OLLM's capabilities in the [OLLM Website](https://ollm.com).
 
-```bash
-pnpm add @ai-sdk/ollm
-```
+## Setup
 
-## Usage
+The OLLM provider is available in the `@ofoundation/ollm` module. You can install it with:
 
-### Basic Chat Completion
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
+<Tab>
+<Snippet text="pnpm add @ofoundation/ollm" dark />
+</Tab>
+<Tab>
+<Snippet text="npm install @ofoundation/ollm" dark />
+</Tab>
+<Tab>
+<Snippet text="yarn add @ofoundation/ollm" dark />
+</Tab>
+<Tab>
+<Snippet text="bun add @ofoundation/ollm" dark />
+</Tab>
+</Tabs>
+
+## Provider Instance
+
+To create an OLLM provider instance, use the `createOLLM` function:
 
 ```typescript
-import { ollm } from '@ai-sdk/ollm';
+import { createOLLM } from '@ofoundation/ollm';
+
+const ollm = createOLLM({
+  apiKey: 'YOUR_OLLM_API_KEY',
+});
+```
+
+You can obtain your OLLM API key from the [OLLM Dashboard](https://console.ollm.com/dashboard/api-keys).
+
+## Language Models
+
+All OLLM models run with confidential computing by default. Use `ollm.chatModel()` for chat models:
+
+```typescript
+// Confidential computing chat models
+const confidentialModel = ollm.chatModel('near/GLM-4.7');
+```
+
+You can find the full list of available models in the [OLLM Models](https://ollm.com/models).
+
+## Examples
+
+Here are examples of using OLLM with the AI SDK:
+
+### `generateText`
+
+```typescript
+import { createOLLM } from '@ofoundation/ollm';
 import { generateText } from 'ai';
 
+const ollm = createOLLM({
+  apiKey: 'YOUR_OLLM_API_KEY',
+});
+
 const { text } = await generateText({
-  model: ollm('gpt-4o'),
-  prompt: 'Hello, how are you?',
+  model: ollm.chatModel('near/GLM-4.6'),
+  prompt: 'What is OLLM?',
 });
 
 console.log(text);
 ```
 
-### Custom Configuration
+### `streamText`
 
 ```typescript
-import { createOLLM } from '@ai-sdk/ollm';
-
-const ollm = createOLLM({
-  baseURL: 'https://api.ollm.com/v1', // Your OLLM server URL
-  apiKey: 'your-api-key', // Or set OLLM_API_KEY environment variable
-});
-
-const model = ollm('claude-3-5-sonnet-20241022');
-```
-
-### Streaming
-
-```typescript
-import { ollm } from '@ai-sdk/ollm';
+import { createOLLM } from '@ofoundation/ollm';
 import { streamText } from 'ai';
 
-const { textStream } = await streamText({
-  model: ollm('gpt-4o-mini'),
-  prompt: 'Write a short story about a robot.',
+const ollm = createOLLM({
+  apiKey: 'YOUR_OLLM_API_KEY',
 });
 
-for await (const chunk of textStream) {
-  process.stdout.write(chunk);
+const result = streamText({
+  model: ollm.chatModel('near/GLM-4.6'),
+  prompt: 'Write a short story about secure AI.',
+});
+
+for await (const chunk of result.textStream) {
+  console.log(chunk);
 }
 ```
 
-### Embeddings
+### Using System Messages
 
 ```typescript
-import { ollm } from '@ai-sdk/ollm';
-import { embed } from 'ai';
+import { createOLLM } from '@ofoundation/ollm';
+import { generateText } from 'ai';
 
-const { embedding } = await embed({
-  model: ollm.embeddingModel('text-embedding-3-small'),
-  value: 'The quick brown fox jumps over the lazy dog.',
+const ollm = createOLLM({
+  apiKey: 'YOUR_OLLM_API_KEY',
 });
 
-console.log(embedding);
-```
-
-### Tool Calling
-
-```typescript
-import { ollm } from '@ai-sdk/ollm';
-import { generateText, tool } from 'ai';
-import { z } from 'zod';
-
-const { text, toolCalls } = await generateText({
-  model: ollm('gpt-4o'),
-  prompt: 'What is the weather in San Francisco?',
-  tools: {
-    getWeather: tool({
-      description: 'Get the weather for a location',
-      parameters: z.object({
-        location: z.string().describe('The city to get weather for'),
-      }),
-      execute: async ({ location }) => {
-        return { temperature: 72, condition: 'sunny' };
-      },
-    }),
-  },
+const { text } = await generateText({
+  model: ollm.chatModel('near/GLM-4.6'),
+  system: 'You are a helpful assistant that responds concisely.',
+  prompt: 'What is TypeScript in one sentence?',
 });
+
+console.log(text);
 ```
 
-## Configuration Options
+## Advanced Features
 
-| Option    | Type                     | Description                                           | Default                   |
-| --------- | ------------------------ | ----------------------------------------------------- | ------------------------- |
-| `apiKey`  | `string`                 | OLLM API key (or set `OLLM_API_KEY` env variable)     | -                         |
-| `baseURL` | `string`                 | Base URL for OLLM API                                 | `https://api.ollm.com/v1` |
-| `headers` | `Record<string, string>` | Custom headers to include in requests                 | -                         |
-| `fetch`   | `FetchFunction`          | Custom fetch implementation                           | -                         |
+OLLM offers several advanced features to enhance your AI applications with enterprise-grade security:
 
-## Supported Models
+1. **Zero Data Retention (ZDR)**: Your prompts and completions are never stored or logged by providers.
 
-Since OLLM is a proxy that supports 100+ LLMs, you can use any model that your OLLM server has configured. Common examples include:
+2. **Confidential Computing**: Hardware-level encryption using TEE technology ensures your data is protected even during processing.
 
-### Chat Models
-- `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
-- `claude-3-5-sonnet-20241022`, `claude-3-opus-20240229`, `claude-3-haiku-20240307`
-- `gemini-1.5-pro`, `gemini-1.5-flash`
-- `mistral-large-latest`, `mistral-small-latest`
-- And many more...
+3. **Verifiable Privacy**: Cryptographic proofs that your data was processed securely.
 
-### Embedding Models
-- `text-embedding-ada-002`
-- `text-embedding-3-small`
-- `text-embedding-3-large`
+4. **Model Flexibility**: Switch between hundreds of models without changing your code or managing multiple API keys.
 
-## Environment Variables
+5. **Cost Management**: Track usage and costs per model in real-time through the dashboard.
 
-- `OLLM_API_KEY`: Your OLLM API key
+6. **Enterprise Support**: Available for high-volume users with custom SLAs and dedicated support.
 
-## License
+7. **Tool Integrations**: Seamlessly works with popular AI development tools including:
+   - Cursor
+   - Windsurf
+   - VS Code
+   - Cline
+   - Roo Code
+   - Replit
 
-Apache-2.0
+For more information about these features and advanced configuration options, visit the [OLLM Documentation](https://ollm.com/docs).
 
+## Additional Resources
+
+- [OLLM Documentation](https://ollm.com/)
+- [OLLM Dashboard](https://console.ollm.com/dashboard)
+- [OLLM Models](https://console.ollm.com/explorer/models)
